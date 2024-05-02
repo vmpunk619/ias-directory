@@ -10,21 +10,30 @@ CORS(app)  # Enable CORS for all domains on all routes
 
 nlp = spacy.load("en_core_web_md")  # Load spaCy language model
 
+def download_file(url):
+    local_filename = "temp.pdf"
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(local_filename, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    return local_filename
 
-def load_pdf_text(filename):
-    """ Load text from a given PDF file. """
+def load_pdf_text(url):
+    filename = download_file(url)
     text = ''
     with pdfplumber.open(filename) as pdf:
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
                 text += page_text + '\n'
+    os.remove(filename)  # Clean up the downloaded file
     return text
 
 
-pdf_text = load_pdf_text(
-    'C:/Users/vmpun/PycharmProjects/ias_directory/data/Posting of IAS Officers as on 22_edited.pdf')
-
+# Usage
+pdf_url = "https://drive.google.com/uc?export=download&id=1Bj1ncGyE_G5C_tukXrrShWEVVyInoMgP"
+pdf_text = load_pdf_text(pdf_url)
 
 def extract_keywords(query):
     doc = nlp(query)
